@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import OpenAI from "openai";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { demoAnalyze } from "@/lib/demo-analyze";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -33,6 +35,44 @@ const SYSTEM_PROMPT = `你是一位资深的招聘总监和简历教练，精通
   ]
 }`;
 
+const GUEST_COOKIE = "demo_uses";
+const GUEST_DAILY_LIMIT = 3;
+
+type GuestUsage = { count: number; resetAt: string };
+
+function readGuestUsage(): GuestUsage {
+  try {
+    const raw = cookies().get(GUEST_COOKIE)?.value;
+    if (!raw) return { count: 0, resetAt: nextMidnightISO() };
+    const parsed = JSON.parse(raw) as GuestUsage;
+    if (new Date(parsed.resetAt).getTime() <= Date.now()) {
+      return { count: 0, resetAt: nextMidnightISO() };
+    }
+    return parsed;
+  } catch {
+    return { count: 0, resetAt: nextMidnightISO() };
+  }
+}
+
+function writeGuestUsage(u: GuestUsage) {
+  try {
+    cookies().set(GUEST_COOKIE, JSON.stringify(u), {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 一周
+    });
+  } catch {
+    // Edge/静态场景下写不了 cookie，忽略
+  }
+}
+
+function nextMidnightISO(): string {
+  const d = new Date();
+  d.setUTCHours(24, 0, 0, 0);
+  return d.toISOString();
+}
+
 export async function POST(req: Request) {
   try {
     const { resume, jd } = await req.json();
@@ -44,128 +84,215 @@ export async function POST(req: Request) {
       );
     }
 
-    // ====== 认证 + 额度检查 ======
-    if (!isSupabaseConfigured()) {
+    if (resume.trim().length < 50) {
       return NextResponse.json(
-        {
-          error:
-            "服务端用户系统未配置，请联系管理员设置 NEXT_PUBLIC_SUPABASE_URL / ANON_KEY",
-        },
-        { status: 503 }
-      );
-    }
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "请先登录后再使用", code: "unauthorized" },
-        { status: 401 }
+        { error: "简历内容太短，请提供完整简历（至少 50 字）" },
+        { status: 400 }
       );
     }
 
-    // 原子扣积分 (RPC 保证并发安全)
-    const { data: consumed, error: rpcError } = await supabase
-      .rpc("consume_credit", { p_user_id: user.id })
-      .single<{ ok: boolean; remaining: number; plan: string }>();
-
-    if (rpcError) {
-      console.error("[analyze] consume_credit error:", rpcError);
-      return NextResponse.json(
-        { error: "用户额度查询失败，请稍后重试" },
-        { status: 500 }
-      );
-    }
-
-    if (!consumed?.ok) {
-      return NextResponse.json(
-        {
-          error: "免费额度已用完，升级 Pro 即可无限次使用",
-          code: "no_credits",
-        },
-        { status: 402 }
-      );
-    }
-
+    const hasSupabase = isSupabaseConfigured();
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "服务器未配置 OPENAI_API_KEY，请联系管理员" },
-        { status: 500 }
-      );
+    const hasOpenAI = Boolean(apiKey);
+
+    // ===== State A: OpenAI 未配置 → 本地 Demo 引擎 =====
+    if (!hasOpenAI) {
+      const result = demoAnalyze(resume, jd);
+      return NextResponse.json({
+        ...result,
+        meta: { ...result.meta, mode: "demo-local" },
+      });
     }
 
-    const client = new OpenAI({
-      apiKey,
-      baseURL: process.env.OPENAI_BASE_URL || undefined,
-    });
-
-    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-
-    const userPrompt = `# 简历内容\n\n${resume.slice(0, 12000)}\n\n# 目标岗位 JD\n\n${jd.slice(0, 6000)}\n\n请严格按 system 指令输出 JSON。`;
-
-    const completion = await client.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-    });
-
-    const raw = completion.choices[0]?.message?.content || "{}";
-    let parsed: any;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return NextResponse.json(
-        { error: "AI 返回格式异常，请重试" },
-        { status: 502 }
-      );
+    // ===== State B: 已配 OpenAI，但用户未登录 / 未配 Supabase → 游客模式 =====
+    let user: { id: string } | null = null;
+    if (hasSupabase) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user: u },
+        } = await supabase.auth.getUser();
+        user = u;
+      } catch {
+        user = null;
+      }
     }
 
-    const result = {
+    // 如果已登录 → 走 Supabase 积分逻辑
+    if (user && hasSupabase) {
+      return await handleAuthenticated(user.id, resume, jd, apiKey!);
+    }
+
+    // 未登录（无论 Supabase 是否配置）→ 游客 cookie 限次
+    return await handleGuest(resume, jd, apiKey!);
+  } catch (e: any) {
+    console.error("[analyze] error:", e);
+    const msg =
+      e?.error?.message || e?.message || "服务器错误，请稍后再试";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+// ==================== 已登录用户（Supabase 积分）====================
+async function handleAuthenticated(
+  userId: string,
+  resume: string,
+  jd: string,
+  apiKey: string
+) {
+  const supabase = createClient();
+
+  // 原子扣积分 (RPC 保证并发安全)
+  const { data: consumed, error: rpcError } = await supabase
+    .rpc("consume_credit", { p_user_id: userId })
+    .single<{ ok: boolean; remaining: number; plan: string }>();
+
+  if (rpcError) {
+    console.error("[analyze] consume_credit error:", rpcError);
+    return NextResponse.json(
+      { error: "用户额度查询失败，请稍后重试" },
+      { status: 500 }
+    );
+  }
+
+  if (!consumed?.ok) {
+    return NextResponse.json(
+      {
+        error: "免费额度已用完，升级 Pro 即可无限次使用",
+        code: "no_credits",
+      },
+      { status: 402 }
+    );
+  }
+
+  const result = await callOpenAI(resume, jd, apiKey);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  // 写历史（尽力而为）
+  try {
+    const admin = createAdminClient();
+    await admin.from("analyses").insert({
+      user_id: userId,
+      resume_preview: resume.slice(0, 200),
+      jd_preview: jd.slice(0, 200),
+      score: result.data.score,
+      model: result.model,
+      tokens_used: result.tokens,
+    });
+  } catch (e) {
+    console.warn("[analyze] save history failed:", e);
+  }
+
+  return NextResponse.json({
+    ...result.data,
+    meta: {
+      remainingCredits: consumed.remaining,
+      plan: consumed.plan,
+      mode: "authenticated",
+    },
+  });
+}
+
+// ==================== 游客模式（cookie 限次）====================
+async function handleGuest(resume: string, jd: string, apiKey: string) {
+  const usage = readGuestUsage();
+  const remaining = Math.max(0, GUEST_DAILY_LIMIT - usage.count);
+
+  if (remaining <= 0) {
+    return NextResponse.json(
+      {
+        error: `今日免费额度已用完（${GUEST_DAILY_LIMIT} 次/天）。注册账号或明天再试。`,
+        code: "guest_limit_reached",
+      },
+      { status: 429 }
+    );
+  }
+
+  const result = await callOpenAI(resume, jd, apiKey);
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  // 扣一次
+  const newUsage: GuestUsage = {
+    count: usage.count + 1,
+    resetAt: usage.resetAt,
+  };
+  writeGuestUsage(newUsage);
+
+  return NextResponse.json({
+    ...result.data,
+    meta: {
+      remainingCredits: Math.max(0, GUEST_DAILY_LIMIT - newUsage.count),
+      plan: "guest",
+      mode: "guest",
+    },
+  });
+}
+
+// ==================== 公共 OpenAI 调用 ====================
+type OpenAIOk = {
+  ok: true;
+  data: {
+    score: number;
+    summary: string;
+    missingKeywords: string[];
+    strengths: string[];
+    weaknesses: string[];
+    rewrites: { original: string; improved: string; reason: string }[];
+  };
+  model: string;
+  tokens: number | null;
+};
+type OpenAIFail = { ok: false; error: string; status: number };
+
+async function callOpenAI(
+  resume: string,
+  jd: string,
+  apiKey: string
+): Promise<OpenAIOk | OpenAIFail> {
+  const client = new OpenAI({
+    apiKey,
+    baseURL: process.env.OPENAI_BASE_URL || undefined,
+  });
+
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const userPrompt = `# 简历内容\n\n${resume.slice(0, 12000)}\n\n# 目标岗位 JD\n\n${jd.slice(0, 6000)}\n\n请严格按 system 指令输出 JSON。`;
+
+  const completion = await client.chat.completions.create({
+    model,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.3,
+    response_format: { type: "json_object" },
+  });
+
+  const raw = completion.choices[0]?.message?.content || "{}";
+  let parsed: any;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { ok: false, error: "AI 返回格式异常，请重试", status: 502 };
+  }
+
+  return {
+    ok: true,
+    data: {
       score: clampScore(parsed.score),
-      summary: String(parsed.summary || "").trim() || "未能生成总结，请重试。",
+      summary:
+        String(parsed.summary || "").trim() || "未能生成总结，请重试。",
       missingKeywords: toStringArray(parsed.missingKeywords).slice(0, 10),
       strengths: toStringArray(parsed.strengths).slice(0, 6),
       weaknesses: toStringArray(parsed.weaknesses).slice(0, 6),
       rewrites: toRewrites(parsed.rewrites).slice(0, 5),
-    };
-
-    // 写历史（尽力而为，失败不阻塞）
-    try {
-      const admin = createAdminClient();
-      await admin.from("analyses").insert({
-        user_id: user.id,
-        resume_preview: resume.slice(0, 200),
-        jd_preview: jd.slice(0, 200),
-        score: result.score,
-        model,
-        tokens_used: completion.usage?.total_tokens || null,
-      });
-    } catch (e) {
-      console.warn("[analyze] save history failed:", e);
-    }
-
-    return NextResponse.json({
-      ...result,
-      meta: {
-        remainingCredits: consumed.remaining,
-        plan: consumed.plan,
-      },
-    });
-  } catch (e: any) {
-    console.error("[analyze] error:", e);
-    const msg =
-      e?.error?.message ||
-      e?.message ||
-      "服务器错误，请稍后再试";
-    return NextResponse.json({ error: msg }, { status: 500 });
-  }
+    },
+    model,
+    tokens: completion.usage?.total_tokens || null,
+  };
 }
 
 function clampScore(v: any): number {

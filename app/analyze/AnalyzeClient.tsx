@@ -22,15 +22,18 @@ type AnalyzeResult = {
   strengths: string[];
   weaknesses: string[];
   rewrites: { original: string; improved: string; reason: string }[];
-  meta?: { remainingCredits: number; plan: string };
+  meta?: { remainingCredits: number; plan: string; mode?: string };
 };
+
+type Mode = "authenticated" | "guest" | "demo-local";
 
 type Props = {
   initialPlan: "free" | "pro" | "lifetime";
   initialCredits: number;
+  mode?: Mode;
 };
 
-export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
+export default function AnalyzeClient({ initialPlan, initialCredits, mode = "authenticated" }: Props) {
   const [resume, setResume] = useState("");
   const [jd, setJd] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,8 +44,9 @@ export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
   const [credits, setCredits] = useState(initialCredits);
   const [fileName, setFileName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [currentMode, setCurrentMode] = useState<Mode>(mode);
 
-  const unlimited = plan === "pro" || plan === "lifetime";
+  const unlimited = plan === "pro" || plan === "lifetime" || currentMode === "demo-local";
   const blocked = !unlimited && credits <= 0;
 
   async function handleFileUpload(file: File) {
@@ -98,11 +102,7 @@ export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 401) {
-          window.location.href = `/sign-in?next=${encodeURIComponent("/analyze")}`;
-          return;
-        }
-        if (res.status === 402 || data.code === "no_credits") {
+        if (res.status === 402 || data.code === "no_credits" || data.code === "guest_limit_reached") {
           setNeedUpgrade(true);
         }
         throw new Error(data.error || "分析失败");
@@ -110,7 +110,15 @@ export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
       setResult(data);
       if (data.meta) {
         setCredits(data.meta.remainingCredits);
-        setPlan(data.meta.plan);
+        if (data.meta.plan === "demo" || data.meta.plan === "guest") {
+          // 保持前端展示状态一致
+          setPlan("free");
+        } else {
+          setPlan(data.meta.plan);
+        }
+        if (data.meta.mode) {
+          setCurrentMode(data.meta.mode as Mode);
+        }
       }
     } catch (e: any) {
       setError(e.message || "分析失败，请稍后再试");
@@ -130,7 +138,11 @@ export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
           </Link>
           <div className="flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
             <Sparkles className="h-3 w-3" />
-            {unlimited
+            {currentMode === "demo-local"
+              ? "Demo · 无限体验"
+              : currentMode === "guest"
+              ? `游客模式 · 剩余 ${credits} 次`
+              : unlimited
               ? `${plan === "lifetime" ? "终身" : "Pro"} · 无限次`
               : `剩余免费次数：${credits}`}
           </div>
@@ -138,6 +150,32 @@ export default function AnalyzeClient({ initialPlan, initialCredits }: Props) {
       </nav>
 
       <div className="mx-auto max-w-6xl px-6 py-10">
+        {currentMode === "demo-local" && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+              <div className="text-sm text-amber-900">
+                <span className="font-semibold">Demo 模式体验中</span>
+                <span className="ml-2 text-amber-800">
+                  当前使用本地关键词引擎生成样例结果，用于展示产品能力。完整 AI 分析将在上线后开放。
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+        {currentMode === "guest" && (
+          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+              <div className="text-sm text-blue-900">
+                <span className="font-semibold">游客免费体验</span>
+                <span className="ml-2 text-blue-800">
+                  每日 {3} 次完整 AI 分析，无需注册。用完了可以注册账号获得更多额度。
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         <header className="mb-8">
           <h1 className="text-3xl font-bold">简历 × JD 智能分析</h1>
           <p className="mt-2 text-slate-600">
