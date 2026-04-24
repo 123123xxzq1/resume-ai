@@ -7,9 +7,10 @@ export default function SiteFooter() {
         <div>© {new Date().getFullYear()} ResumeAI · 用 AI 帮你拿到更好的 offer</div>
         <div className="flex gap-6">
           <Link href="/blog" className="hover:text-slate-900">博客</Link>
+          <Link href="/pricing" className="hover:text-slate-900">定价</Link>
           <Link href="/feed.xml" className="hover:text-slate-900">RSS</Link>
-          <a href="#" className="hover:text-slate-900">隐私</a>
-          <a href="#" className="hover:text-slate-900">条款</a>
+          <Link href="/privacy" className="hover:text-slate-900">隐私</Link>
+          <Link href="/terms" className="hover:text-slate-900">条款</Link>
         </div>
       </div>
     </footer>
