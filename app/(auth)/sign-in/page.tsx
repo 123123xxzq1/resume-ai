@@ -75,10 +75,25 @@ function SignInForm() {
           </p>
 
           {!supabaseConfigured && (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              ⚠️ 管理员尚未配置 Supabase。请先在 <code>.env.local</code> 中填写{" "}
-              <code>NEXT_PUBLIC_SUPABASE_URL</code> 和{" "}
-              <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>。
+            <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                <div className="text-sm text-blue-900">
+                  <div className="font-semibold">
+                    登录 / 注册功能内测中
+                  </div>
+                  <div className="mt-1 text-blue-800">
+                    预计 1-2 周开放。现阶段你可以
+                    <Link
+                      href="/analyze"
+                      className="ml-1 font-semibold underline underline-offset-2 hover:text-blue-700"
+                    >
+                      直接用游客模式体验
+                    </Link>
+                    ，每日 3 次完整分析，无需注册。
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -90,9 +105,10 @@ function SignInForm() {
                 <input
                   type="email"
                   required
+                  disabled={!supabaseConfigured}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="you@example.com"
                 />
               </div>
@@ -105,9 +121,10 @@ function SignInForm() {
                   type="password"
                   required
                   minLength={6}
+                  disabled={!supabaseConfigured}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="至少 6 位"
                 />
               </div>
@@ -122,11 +139,11 @@ function SignInForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !supabaseConfigured}
               className="btn-primary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              登录
+              {supabaseConfigured ? "登录" : "登录即将开放"}
             </button>
           </form>
 
@@ -139,7 +156,8 @@ function SignInForm() {
           <button
             type="button"
             onClick={onGoogle}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={!supabaseConfigured}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

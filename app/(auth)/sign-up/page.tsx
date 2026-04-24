@@ -11,6 +11,11 @@ function SignUpForm() {
   const params = useSearchParams();
   const next = params.get("next") || "/analyze";
 
+  const supabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -85,6 +90,29 @@ function SignUpForm() {
             注册即送 <strong className="text-brand-700">3 次免费分析</strong>
           </p>
 
+          {!supabaseConfigured && (
+            <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                <div className="text-sm text-blue-900">
+                  <div className="font-semibold">
+                    注册功能内测中
+                  </div>
+                  <div className="mt-1 text-blue-800">
+                    预计 1-2 周开放。现阶段你可以
+                    <Link
+                      href="/analyze"
+                      className="ml-1 font-semibold underline underline-offset-2 hover:text-blue-700"
+                    >
+                      直接用游客模式体验
+                    </Link>
+                    ，每日 3 次完整分析，无需注册。
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">邮箱</label>
@@ -93,9 +121,10 @@ function SignUpForm() {
                 <input
                   type="email"
                   required
+                  disabled={!supabaseConfigured}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="you@example.com"
                 />
               </div>
@@ -108,9 +137,10 @@ function SignUpForm() {
                   type="password"
                   required
                   minLength={6}
+                  disabled={!supabaseConfigured}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2.5 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="至少 6 位"
                 />
               </div>
@@ -125,11 +155,11 @@ function SignUpForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !supabaseConfigured}
               className="btn-primary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              注册
+              {supabaseConfigured ? "注册" : "注册即将开放"}
             </button>
           </form>
 
