@@ -7,12 +7,15 @@ import {
   Zap,
   ShieldCheck,
   CheckCircle2,
-  Star,
+  BookOpen,
+  Clock,
 } from "lucide-react";
 import SiteNav from "@/components/SiteNav";
 import SiteFooter from "@/components/SiteFooter";
+import { getAllPosts } from "@/lib/blog";
 
 export default function Home() {
+  const featuredPosts = getAllPosts().slice(0, 6);
   return (
     <main className="min-h-screen">
       <SiteNav />
@@ -27,7 +30,7 @@ export default function Home() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-600"></span>
             </span>
-            GPT-4o 驱动 · 已被 3,217 位求职者使用
+            GPT-4o 驱动 · 2025 新上线 · 内测体验中
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">
             让你的简历在
@@ -49,13 +52,23 @@ export default function Home() {
               查看定价
             </a>
           </div>
-          <p className="mt-4 text-xs text-slate-500">前 3 次免费 · 无需注册 · 数据不保存</p>
+          <p className="mt-4 text-xs text-slate-500">3 次免费 · 无需注册 · 数据不保存</p>
 
-          <div className="mt-16 flex items-center justify-center gap-1 text-amber-500">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-current" />
-            ))}
-            <span className="ml-2 text-sm text-slate-600">4.9 / 5 · 来自 812 条真实评价</span>
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-brand-600" />
+              <span>GPT-4o 技术驱动</span>
+            </div>
+            <div className="hidden h-4 w-px bg-slate-200 sm:block" />
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-brand-600" />
+              <span>13 篇深度求职指南</span>
+            </div>
+            <div className="hidden h-4 w-px bg-slate-200 sm:block" />
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-brand-600" />
+              <span>浏览器本地处理 · 不上传不保存</span>
+            </div>
           </div>
         </div>
       </section>
@@ -109,6 +122,64 @@ export default function Home() {
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Blog Matrix */}
+      <section id="resources" className="border-t border-slate-200 bg-gradient-to-b from-slate-50 to-white py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+                <BookOpen className="h-3 w-3" />
+                求职知识库
+              </div>
+              <h2 className="mt-3 text-3xl font-bold sm:text-4xl">
+                13 篇深度求职指南，全部免费
+              </h2>
+              <p className="mt-3 max-w-2xl text-slate-600">
+                从简历 STAR 改写、ATS 规则、大厂模板，到面试话术、薪资谈判——
+                我们把真实求职场景拆到每一个细节。
+              </p>
+            </div>
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-brand-700 hover:text-brand-800"
+            >
+              查看全部 13 篇
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {featuredPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group card flex flex-col p-6 transition hover:border-brand-300 hover:shadow-md"
+              >
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 font-medium text-brand-700">
+                    {post.category}
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Clock className="h-3 w-3" />
+                    {post.readingMinutes} 分钟
+                  </span>
+                </div>
+                <h3 className="mt-3 text-lg font-semibold leading-snug text-slate-900 group-hover:text-brand-700">
+                  {post.title}
+                </h3>
+                <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
+                  {post.description}
+                </p>
+                <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-700">
+                  阅读全文
+                  <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" />
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -223,8 +294,8 @@ export default function Home() {
               a: "目前支持 PDF 上传、纯文本粘贴。Word (docx) 请另存为 PDF 后上传，或直接复制粘贴内容。",
             },
             {
-              q: "付费怎么收？支持微信支付宝吗？",
-              a: "当前 MVP 版本专注核心体验，支付通道即将接入微信 / 支付宝 / Stripe。升级会员请先加我们微信（见页脚）。",
+              q: "免费版和 Pro 的区别？",
+              a: "免费版可以完整体验核心分析流程（ATS 评分、关键词缺口、改写建议），每日 3 次限额足够一次求职周期使用。Pro 提供无限次分析、多份简历管理、求职信一键生成等进阶能力，适合高频投递的求职者。",
             },
           ].map((item, i) => (
             <details key={i} className="card group p-5">
