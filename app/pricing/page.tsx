@@ -22,7 +22,7 @@ import {
 export const metadata: Metadata = {
   title: "定价 · ResumeAI",
   description:
-    "ResumeAI 订阅方案：免费版每日 3 次、Pro 月度 ¥39 无限次、终身版 ¥299 买断。支持微信 / 支付宝 / 海外信用卡，7 天无理由退款。",
+    "ResumeAI 订阅方案：免费版每日 3 次、Pro 月度 ¥9.9 无限次、终身版 ¥99 买断。支持微信 / 支付宝 赞助解锁，7 天无理由退款。",
 };
 
 export default async function PricingPage({
@@ -325,7 +325,7 @@ export default async function PricingPage({
                 },
                 {
                   q: "Pro 和终身版我该选哪个？",
-                  a: "如果你只是这一波找工作（1-2 个月），选 Pro 月度（¥39）；如果你未来 1-2 年还会跳槽 / 想长期优化简历 / 或帮朋友也用，选终身版（¥299）更划算——相当于 7-8 个 Pro 月的价格。",
+                  a: "如果你只是这一波找工作（1-2 个月），选 Pro 月度（¥9.9）；如果你未来 1-2 年还会跳槽 / 想长期优化简历 / 或帮朋友也用，选终身版（¥99）更划算——相当于 10 个 Pro 月的价格，但可用一辈子。",
                 },
               ].map((item) => (
                 <details

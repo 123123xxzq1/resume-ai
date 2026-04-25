@@ -18,8 +18,8 @@ export const PLANS: Record<PlanId, PlanDef> = {
     id: "pro_monthly",
     name: "Pro 月度",
     plan: "pro",
-    priceCNY: 39,
-    priceUSD: 5.9,
+    priceCNY: 9.9,
+    priceUSD: 1.49,
     durationDays: 30,
     description: "适合正在找工作的你",
     features: [
@@ -36,8 +36,8 @@ export const PLANS: Record<PlanId, PlanDef> = {
     id: "lifetime",
     name: "终身版",
     plan: "lifetime",
-    priceCNY: 299,
-    priceUSD: 39,
+    priceCNY: 99,
+    priceUSD: 14.9,
     durationDays: null,
     description: "一次付费，终身使用",
     features: [

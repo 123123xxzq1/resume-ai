@@ -206,8 +206,8 @@ export default function Home() {
                 cta: "立即试用",
               },
               {
-                name: "求职季会员",
-                price: "¥39",
+                name: "Pro 月度",
+                price: "¥9.9",
                 unit: "/ 月",
                 highlight: true,
                 features: [
@@ -221,15 +221,15 @@ export default function Home() {
                 cta: "升级会员",
               },
               {
-                name: "一次付清",
+                name: "终身版",
                 price: "¥99",
                 unit: "/ 一次性",
                 highlight: false,
                 features: [
-                  "买断 6 个月",
+                  "终身无限次使用",
                   "会员全部功能",
-                  "简历模板 30+",
-                  "LinkedIn 档案优化",
+                  "未来新功能免费升级",
+                  "优先客服支持",
                 ],
                 cta: "一次拿下",
               },
