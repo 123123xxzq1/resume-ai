@@ -62,12 +62,22 @@ export default function PricingCard({ plan, isLoggedIn, stripeEnabled, zpayEnabl
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-bold text-slate-900">¥{plan.priceCNY}</span>
           <span className="text-sm text-slate-500">
-            {plan.durationDays ? ` / ${plan.durationDays} 天` : " · 终身"}
+            {plan.durationDays === 30
+              ? " / 月"
+              : plan.durationDays === 365
+                ? " / 年"
+                : plan.durationDays
+                  ? ` / ${plan.durationDays} 天`
+                  : " · 终身"}
           </span>
         </div>
         <div className="mt-1 text-xs text-slate-400">
           海外 ${plan.priceUSD}
-          {plan.durationDays ? "/月" : " · 一次性"}
+          {plan.durationDays === 30
+            ? " / 月"
+            : plan.durationDays === 365
+              ? " / 年"
+              : " · 一次性"}
         </div>
       </div>
 

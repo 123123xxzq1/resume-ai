@@ -18,7 +18,7 @@ import type {
  *   AFDIAN_USER_ID          - 你的爱发电 user_id（数字字符串）
  *   AFDIAN_PAGE_URL         - 你的爱发电主页，如 https://afdian.net/a/myname
  *   AFDIAN_PLAN_PRO_MONTHLY - Pro 月度方案的 plan_id
- *   AFDIAN_PLAN_LIFETIME    - 终身版方案的 plan_id
+ *   AFDIAN_PLAN_PRO_YEARLY  - Pro 年度方案的 plan_id
  */
 
 // ==================== 签名 ====================
@@ -44,7 +44,7 @@ export function verifyAfdianSign(
 /** 爱发电 plan_id → 我们的 PlanId */
 export function resolveOurPlanId(afdianPlanId: string): string | null {
   if (afdianPlanId === process.env.AFDIAN_PLAN_PRO_MONTHLY) return "pro_monthly";
-  if (afdianPlanId === process.env.AFDIAN_PLAN_LIFETIME) return "lifetime";
+  if (afdianPlanId === process.env.AFDIAN_PLAN_PRO_YEARLY) return "pro_yearly";
   return null;
 }
 
@@ -52,7 +52,7 @@ export function resolveOurPlanId(afdianPlanId: string): string | null {
 function toAfdianPlanId(planId: string): string | null {
   const map: Record<string, string | undefined> = {
     pro_monthly: process.env.AFDIAN_PLAN_PRO_MONTHLY,
-    lifetime: process.env.AFDIAN_PLAN_LIFETIME,
+    pro_yearly: process.env.AFDIAN_PLAN_PRO_YEARLY,
   };
   return map[planId] || null;
 }

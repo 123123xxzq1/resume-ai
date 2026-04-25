@@ -18,7 +18,7 @@ export function getStripe(): Stripe {
 
 function priceIdFor(planId: string): string | null {
   if (planId === "pro_monthly") return process.env.STRIPE_PRICE_PRO_MONTHLY || null;
-  if (planId === "lifetime") return process.env.STRIPE_PRICE_LIFETIME || null;
+  if (planId === "pro_yearly") return process.env.STRIPE_PRICE_PRO_YEARLY || null;
   return null;
 }
 

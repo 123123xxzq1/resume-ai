@@ -23,7 +23,7 @@ import {
 export const metadata: Metadata = {
   title: "定价 · ResumeAI",
   description:
-    "ResumeAI 订阅方案：免费版每日 3 次、Pro 月度 ¥9.9 无限次、终身版 ¥99 买断。支持微信 / 支付宝 赞助解锁，7 天无理由退款。",
+    "ResumeAI 订阅方案：免费版每日 3 次、Pro 月度 ¥9.9 无限次、Pro 年度 ¥96。支持微信 / 支付宝 赞助解锁，7 天无理由退款。",
 };
 
 export default async function PricingPage({
@@ -136,9 +136,9 @@ export default async function PricingPage({
               afdianEnabled={afdianEnabled}
             />
 
-            {/* Lifetime Card */}
+            {/* Pro Yearly Card */}
             <PricingCard
-              plan={PLANS.lifetime}
+              plan={PLANS.pro_yearly}
               isLoggedIn={isLoggedIn}
               stripeEnabled={stripeEnabled}
               zpayEnabled={zpayEnabled}
@@ -191,7 +191,7 @@ export default async function PricingPage({
                       Pro 月度
                     </th>
                     <th className="px-5 py-3 text-center font-medium">
-                      终身版
+                      Pro 年度
                     </th>
                   </tr>
                 </thead>
@@ -312,8 +312,8 @@ export default async function PricingPage({
                   a: "通过 Stripe 订阅的会自动续费（可随时取消）；通过微信/支付宝单笔购买的不会自动续费，到期后回到免费版，次月需要手动续。",
                 },
                 {
-                  q: "终身版是永久有效吗？",
-                  a: "是。只要 ResumeAI 产品还在运营，终身版账号就可以无限次使用当前所有功能，未来新功能也免费升级。如果产品停止运营，我们会提前 90 天通知并按比例退款。",
+                  q: "Pro 年度购买后是如何计时的？",
+                  a: "付款成功后立即开始计时，共 365 天。期间无限次使用 Pro 所有功能。到期后会回到免费版（每日 3 次），可随时续费。",
                 },
                 {
                   q: "可以退款吗？",
@@ -321,15 +321,15 @@ export default async function PricingPage({
                 },
                 {
                   q: "发票可以开吗？",
-                  a: "Pro / 终身 订阅后，发送订单号到客服邮箱即可开具电子发票（增值税普通发票，支持邮箱收取）。",
+                  a: "Pro 订阅后，发送订单号到客服邮箱即可开具电子发票（增值税普通发票，支持邮箱收取）。",
                 },
                 {
                   q: "我可以先试用免费版，满意再付费吗？",
                   a: "这就是我们推荐的做法。免费版每日 3 次能让你完整体验 ATS 评分 + 关键词缺口 + 改写建议全流程。一次求职周期完全够用，满意再升级 Pro。",
                 },
                 {
-                  q: "Pro 和终身版我该选哪个？",
-                  a: "如果你只是这一波找工作（1-2 个月），选 Pro 月度（¥9.9）；如果你未来 1-2 年还会跳槽 / 想长期优化简历 / 或帮朋友也用，选终身版（¥99）更划算——相当于 10 个 Pro 月的价格，但可用一辈子。",
+                  q: "Pro 月度和年度我该选哪个？",
+                  a: "如果你只是这一波找工作（1-2 个月），选 Pro 月度（¥9.9）；如果你使用超过 10 个月，或未来一年内还会跳槽 / 需要不时优化简历，选 Pro 年度（¥96）更划算——相当于每月只要 ¥8，比月卡便宜 19%。",
                 },
               ].map((item) => (
                 <details

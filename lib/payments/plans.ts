@@ -1,11 +1,11 @@
-export type PlanId = "pro_monthly" | "lifetime";
+export type PlanId = "pro_monthly" | "pro_yearly";
 
 export type PlanDef = {
   id: PlanId;
   name: string;
-  plan: "pro" | "lifetime";       // 对应 profiles.plan
-  priceCNY: number;               // 人民币元（ZPay 用）
-  priceUSD: number;               // 美元（Stripe 用，参考值）
+  plan: "pro" | "lifetime";       // 对应 profiles.plan（lifetime 保留以兼容历史数据）
+  priceCNY: number;               // 人民币元
+  priceUSD: number;               // 美元（参考值）
   durationDays: number | null;    // null = 终身
   description: string;
   features: string[];
@@ -32,18 +32,18 @@ export const PLANS: Record<PlanId, PlanDef> = {
     highlight: true,
     badge: "最受欢迎",
   },
-  lifetime: {
-    id: "lifetime",
-    name: "终身版",
-    plan: "lifetime",
-    priceCNY: 99,
+  pro_yearly: {
+    id: "pro_yearly",
+    name: "Pro 年度",
+    plan: "pro",
+    priceCNY: 96,
     priceUSD: 14.9,
-    durationDays: null,
-    description: "一次付费，终身使用",
+    durationDays: 365,
+    description: "一年无限次，按月仅 ¥8 元",
     features: [
       "Pro 所有功能",
-      "终身无限次使用",
-      "未来新功能免费升级",
+      "365 天内无限次使用",
+      "按月仅 ¥8，比月卡便宜 19%",
       "优先客服支持",
     ],
   },

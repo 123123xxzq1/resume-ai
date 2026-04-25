@@ -221,17 +221,17 @@ export default function Home() {
                 cta: "升级会员",
               },
               {
-                name: "终身版",
-                price: "¥99",
-                unit: "/ 一次性",
+                name: "Pro 年度",
+                price: "¥96",
+                unit: "/ 年",
                 highlight: false,
                 features: [
-                  "终身无限次使用",
+                  "365 天无限次使用",
                   "会员全部功能",
-                  "未来新功能免费升级",
+                  "按月仅 ¥8，省 19%",
                   "优先客服支持",
                 ],
-                cta: "一次拿下",
+                cta: "买年卡更划算",
               },
             ].map((p, i) => (
               <div
