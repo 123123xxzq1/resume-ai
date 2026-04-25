@@ -130,10 +130,10 @@ declare
   v_plan text;
   v_expires timestamptz;
 begin
-  select credits, plan, plan_expires_at
+  select profiles.credits, profiles.plan, profiles.plan_expires_at
     into v_credits, v_plan, v_expires
   from public.profiles
-  where id = p_user_id
+  where profiles.id = p_user_id
   for update;
 
   if not found then
