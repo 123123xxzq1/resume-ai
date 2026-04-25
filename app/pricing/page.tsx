@@ -6,6 +6,7 @@ import PricingCard from "./PricingCard";
 import { PLANS } from "@/lib/payments/plans";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { stripeProvider } from "@/lib/payments/stripe";
+import { afdianProvider } from "@/lib/payments/afdian";
 import { zpayProvider } from "@/lib/payments/zpay";
 import {
   Gift,
@@ -40,7 +41,8 @@ export default async function PricingPage({
 
   const stripeEnabled = stripeProvider.isConfigured();
   const zpayEnabled = zpayProvider.isConfigured();
-  const paymentReady = stripeEnabled || zpayEnabled;
+  const afdianEnabled = afdianProvider.isConfigured();
+  const paymentReady = stripeEnabled || zpayEnabled || afdianEnabled;
 
   return (
     <>
@@ -131,6 +133,7 @@ export default async function PricingPage({
               isLoggedIn={isLoggedIn}
               stripeEnabled={stripeEnabled}
               zpayEnabled={zpayEnabled}
+              afdianEnabled={afdianEnabled}
             />
 
             {/* Lifetime Card */}
@@ -139,6 +142,7 @@ export default async function PricingPage({
               isLoggedIn={isLoggedIn}
               stripeEnabled={stripeEnabled}
               zpayEnabled={zpayEnabled}
+              afdianEnabled={afdianEnabled}
             />
           </div>
 

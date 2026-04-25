@@ -11,9 +11,10 @@ type Props = {
   isLoggedIn: boolean;
   stripeEnabled: boolean;
   zpayEnabled: boolean;
+  afdianEnabled: boolean;
 };
 
-export default function PricingCard({ plan, isLoggedIn, stripeEnabled, zpayEnabled }: Props) {
+export default function PricingCard({ plan, isLoggedIn, stripeEnabled, zpayEnabled, afdianEnabled }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<Channel | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -87,36 +88,59 @@ export default function PricingCard({ plan, isLoggedIn, stripeEnabled, zpayEnabl
       )}
 
       <div className="space-y-2">
+        {/* 爱发电：微信 / 支付宝 赞助 */}
         <button
-          onClick={() => handleBuy("zpay")}
-          disabled={!zpayEnabled || loading !== null}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:from-green-600 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          onClick={() => handleBuy("afdian")}
+          disabled={!afdianEnabled || loading !== null}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:from-purple-600 hover:to-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading === "zpay" ? (
+          {loading === "afdian" ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <>
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9.5 14.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm5 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
               </svg>
-              微信 / 支付宝
+              微信 / 支付宝 赞助解锁
             </>
           )}
         </button>
-        <button
-          onClick={() => handleBuy("stripe")}
-          disabled={!stripeEnabled || loading !== null}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading === "stripe" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <CreditCard className="h-4 w-4" />
-              海外信用卡 (Stripe)
-            </>
-          )}
-        </button>
+
+        {/* ZPay 备用 */}
+        {zpayEnabled && (
+          <button
+            onClick={() => handleBuy("zpay")}
+            disabled={loading !== null}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading === "zpay" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                微信 / 支付宝 (ZPay)
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Stripe 海外卡 */}
+        {stripeEnabled && (
+          <button
+            onClick={() => handleBuy("stripe")}
+            disabled={loading !== null}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading === "stripe" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4" />
+                海外信用卡 (Stripe)
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {!isLoggedIn && (

@@ -1,6 +1,6 @@
 import type { PlanId } from "./plans";
 
-export type Channel = "stripe" | "zpay";
+export type Channel = "stripe" | "zpay" | "afdian";
 
 export type CreateCheckoutInput = {
   userId: string;

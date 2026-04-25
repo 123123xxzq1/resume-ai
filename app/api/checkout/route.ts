@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { PLANS, type PlanId } from "@/lib/payments/plans";
 import { stripeProvider } from "@/lib/payments/stripe";
 import { zpayProvider } from "@/lib/payments/zpay";
+import { afdianProvider } from "@/lib/payments/afdian";
 import type { Channel, PaymentProvider } from "@/lib/payments/types";
 import { SITE, absoluteUrl } from "@/lib/site";
 
@@ -16,7 +17,9 @@ function generateOrderNo(): string {
 }
 
 function pickProvider(channel: Channel): PaymentProvider {
-  return channel === "stripe" ? stripeProvider : zpayProvider;
+  if (channel === "stripe") return stripeProvider;
+  if (channel === "afdian") return afdianProvider;
+  return zpayProvider;
 }
 
 export async function POST(req: Request) {
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
     if (!planId || !(planId in PLANS)) {
       return NextResponse.json({ error: "无效的套餐" }, { status: 400 });
     }
-    if (channel !== "stripe" && channel !== "zpay") {
+    if (channel !== "stripe" && channel !== "zpay" && channel !== "afdian") {
       return NextResponse.json({ error: "无效的支付通道" }, { status: 400 });
     }
 
@@ -58,7 +61,9 @@ export async function POST(req: Request) {
           error:
             channel === "stripe"
               ? "Stripe 未配置，请先设置 STRIPE_SECRET_KEY"
-              : "ZPay 未配置，请先设置 ZPAY_PID / ZPAY_KEY",
+              : channel === "afdian"
+                ? "爱发电未配置，请先设置 AFDIAN_TOKEN"
+                : "ZPay 未配置，请先设置 ZPAY_PID / ZPAY_KEY",
         },
         { status: 503 }
       );
@@ -94,7 +99,11 @@ export async function POST(req: Request) {
       successUrl: `${origin}/dashboard?paid=1`,
       cancelUrl: `${origin}/pricing?canceled=1`,
       notifyUrl: absoluteUrl(
-        channel === "stripe" ? "/api/webhooks/stripe" : "/api/webhooks/zpay"
+        channel === "stripe"
+          ? "/api/webhooks/stripe"
+          : channel === "afdian"
+            ? "/api/webhooks/afdian"
+            : "/api/webhooks/zpay"
       ),
     });
 
