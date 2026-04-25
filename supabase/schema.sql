@@ -44,7 +44,7 @@ create index if not exists idx_analyses_user_created
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  channel text not null check (channel in ('stripe', 'zpay')),
+  channel text not null check (channel in ('stripe', 'zpay', 'afdian')),
   provider_order_id text,                 -- Stripe session id / ZPay trade_no
   out_trade_no text not null unique,      -- 我们自己的订单号
   plan text not null check (plan in ('pro', 'lifetime')),
