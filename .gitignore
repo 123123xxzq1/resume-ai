@@ -49,9 +49,11 @@ desktop.ini
 
 # vercel
 .vercel
+.env*.local
 
 # typescript
 *.tsbuildinfo
 
-.vercel
-.env*.local
+# scripts 抓取的敏感输出（含 user_id / plan_id）
+scripts/afdian-page.html
+scripts/afdian-*.json
